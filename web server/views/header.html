@@ -1,0 +1,50 @@
+<ul class="my-header">
+    <li>
+        <a id="header-home" href="/home">หน้าหลัก</a>
+    </li>
+    <li>
+        <a id="header-createProposition" href="/create-quiz">สร้างโจทย์</a>
+    </li>
+    <li>
+        <a id="header-findProposition" href="/find-quiz">ค้นหาโจทย์</a>
+    </li>
+    <li>
+        <a id="header-exam" href="#">ทำแบบทดสอบ</a>
+    </li>
+    <li>
+        <a id="header-history" href="/history">ดูประวัติ</a>
+    </li>
+    <div class="my-header-right">
+        <li>
+            <a id="header-profile" href="/home" >โปรไฟล์</a>
+        </li>
+        <li>
+            <a href="/login">ออกจากระบบ</a>
+        </li>
+    </div>
+    <script>
+        //setup
+        $(document).ready(function () {
+            $('#header-profile').text(" คุณ " + sessionStorage.getItem('firstName'));
+        });
+
+        //send
+        $('#header-exam').click(function () {
+            console.log()
+            socket.emit('create room', { token: sessionStorage.getItem('token') });
+            console.log('click create room');
+            return false;
+        });
+
+        //receiv
+        socket.on('create room', function (data) {
+            sessionStorage.setItem('room', data.room);
+            console.log(data.room);
+            if (typeof Q_ID === "undefined" || Q_ID == "") {
+                window.location.href = "/room-teacher?roomKey=" + data.roomKey;
+            } else {
+                window.location.href = "/room-teacher?roomKey=" + data.roomKey + "&qid=" + Q_ID;
+            }
+        });
+    </script>
+</ul>

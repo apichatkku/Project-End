@@ -1,0 +1,243 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+    <style>
+        @media (min-width:320px) {
+            button.choice {
+                border: 10px solid black;
+                color: black;
+                width: 300px;
+                height: 300px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 150px;
+                font-weight: 500;
+                margin: 5px 5px;
+                max-width: 90%;
+                max-height: 90%;
+            }
+
+            div.choice-box {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                width: 30em;
+                height: 90%;
+                margin-top: -45%;
+                /*set to a negative number 1/2 of your height*/
+                margin-left: -15em;
+                /*set to a negative number 1/2 of your width*/
+                max-width: 90%;
+                max-height: 90%;
+            }
+
+            div#divCheck {
+                background-color: rgba(78, 207, 33, 0.89);
+                color: rgb(255, 211, 211);
+                font-size: 100px;
+                font-weight: bold;
+                padding: 100px;
+                margin-top: 25%;
+                margin-left: 25%;
+                width: 50%;
+                height: auto;
+                position: absolute;
+                display: none;
+                z-index: 2;
+            }
+
+            .choice1 {
+                background-color: rgba(241, 48, 48, 0.9);
+            }
+
+            .choice2 {
+                background-color: rgba(255, 233, 36, 0.9);
+            }
+
+            .choice3 {
+                background-color: rgba(31, 233, 48, 0.9);
+            }
+
+            .choice4 {
+                background-color: rgba(53, 176, 247, 0.9);
+            }
+            #name-show{
+                font-size: 100px;
+                text-decoration: underline solid black;
+                font-weight: bold;  
+            }
+        }
+
+        @media (min-width:1025px) {
+            button.choice {
+                width: 200px;
+                height: 200px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 150px;
+                font-weight: 500;
+                margin: 5px 5px;
+                max-width: 90%;
+                max-height: 90%;
+            }
+
+            div.choice-box {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                width: 500px;
+                height: auto;
+                margin-top: 0;
+                /*set to a negative number 1/2 of your height*/
+                margin-left: -250px;
+                /*set to a negative number 1/2 of your width*/
+                max-width: 90%;
+                max-height: 90%;
+            }
+
+            div#divCheck {
+                background-color: rgba(78, 207, 33, 0.89);
+                color: rgb(255, 211, 211);
+                font-size: 100px;
+                font-weight: bold;
+                top: 50%;
+                left: 50%;
+                margin-top: -150px;
+                margin-left: -150px;
+                width: 300px;
+                height: auto;
+                position: absolute;
+                display: block;
+                z-index: 2;
+            }
+
+            .choice1 {
+                background-color: rgba(241, 48, 48, 0.9);
+            }
+
+            .choice2 {
+                background-color: rgba(255, 233, 36, 0.9);
+            }
+
+            .choice3 {
+                background-color: rgba(31, 233, 48, 0.9);
+            }
+
+            .choice4 {
+                background-color: rgba(53, 176, 247, 0.9);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="choice-box">
+        <h1 id="name-show" align="center">ชื่อ</h1>
+        <div id="divCheck" align="center">ถูก</div>
+        <div align="center">
+            <button id="btn1" class="choice choice1" onclick="sendText('0')">ก.</button>
+            <button id="btn2" class="choice choice2" onclick="sendText('1')">ข.</button>
+        </div>
+        <div align="center">
+            <button id="btn3" class="choice choice3" onclick="sendText('2')">ค.</button>
+            <button id="btn4" class="choice choice4" onclick="sendText('3')">ง.</button>
+        </div>
+        <h1 style="font-size: 100px" align="center">คุณมี
+            <span id="score-show" style="text-decoration: underline solid black;">0</span> คะแนน</h1>
+    </div>
+    <script>
+
+        var socket = io();
+
+        window.onload = function () {
+            let url = new URL(window.location.href);
+            let roomKey = url.searchParams.get("roomKey");
+            console.log(roomKey);
+            document.title = sessionStorage.getItem('name');
+            $('#name-show').text(sessionStorage.getItem('name'));
+            if (roomKey !== null) {
+                $('h1').text("รหัสห้อง : " + roomKey);
+            }
+            if (sessionStorage.getItem('token') !== null) {
+                console.log(sessionStorage.getItem('token'));
+            }
+            if (sessionStorage.getItem('room') !== null) {
+                console.log(sessionStorage.getItem('room'));
+                socket.emit('enter room', { room: sessionStorage.getItem('room'), token: sessionStorage.getItem('token') });
+            }
+        }
+
+        //receive
+        socket.on('room member list', function (data) {
+            $('nav#member-list-box').text('');
+            for (let i in data) {
+                $('nav#member-list-box').append($('<p>').text(data[i]));
+            }
+        });
+
+        socket.on('QA-std', function (data) {
+            setOpacity(0, true);
+            console.log(data);
+            if (data.check == "yes") {
+                $("#divCheck").css("background-color", "rgba(78, 207, 33, 0.89)");
+                $("#divCheck").text('ถูก');
+                console.log(data);
+                $('#score-show').text(data.score);
+                document.body.style.background = "LimeGreen";
+                $("#divCheck").show();
+                window.setTimeout(hideCheck, 1500);
+            } else if (data.check == "no") {
+                $("#divCheck").css("background-color", "rgba(255, 45, 45, 0.89)");
+                $("#divCheck").text('ผิด');
+                document.body.style.background = "red";
+                $("#divCheck").show();
+                window.setTimeout(hideCheck, 1500);
+            }
+        });
+
+        function hideCheck() {
+            $("#divCheck").hide();
+            document.body.style.background = "white";
+        }
+
+        function setOpacity(btn, reset) {
+            btn = Number(btn) + 1;
+            document.getElementById("btn1").style.border = "10px solid black";
+            document.getElementById("btn1").style.color = "black";
+            document.getElementById("btn2").style.border = "10px solid black";
+            document.getElementById("btn2").style.color = "black";
+            document.getElementById("btn3").style.border = "10px solid black";
+            document.getElementById("btn3").style.color = "black";
+            document.getElementById("btn4").style.border = "10px solid black";
+            document.getElementById("btn4").style.color = "black";
+            if (!reset) {
+                document.getElementById("btn" + btn).style.border = "10px solid white";
+                document.getElementById("btn" + btn).style.color = "white";
+            }
+        }
+
+        //send
+        function sendText(text) {
+            setOpacity(text);
+            let inputText = text;
+            if (inputText != "") {
+                socket.emit('QA-std', { room: sessionStorage.getItem('room'), token: sessionStorage.getItem('token'), text: inputText });
+            }
+            console.log(555);
+        }
+
+    </script>
+</body>
+
+</html>

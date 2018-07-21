@@ -1,0 +1,110 @@
+<html >
+    <head>
+        <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" type="text/css" href="css/main.css">
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/jquery/1.11.2/jquery.min.js"></script>
+        <script src="/js/client/sha1.js"></script>
+        <style>
+            table{
+                background-color: #fff;
+                font-size: 26px;
+            }
+            td{
+                padding: 10px 10px;
+            }
+            button{
+                align-content: left;
+            }
+        </style>
+    </head>
+    <body>
+        <div align="center">
+            <h1></h1>
+            <table>
+                <tr>
+                    <td>
+                            <nav id="member-list-box" class="list" style="width:200px;height:400px">
+                            </nav>
+                    </td>
+                    <td style="width:600px; background-color:rgb(216, 216, 216); font-weight:bold" align="center">
+                            <p style="font-size:50px;" id="textQuestion">รอนักเรียนเข้าสู่ห้อง</p>
+                            <div style="background-color:rgb(255, 64, 64);" id="textC1"></div>
+                            <div style="background-color:rgb(233, 210, 0);" id="textC2"></div>
+                            <div style="background-color:rgb(47, 241, 54);" id="textC3"></div>
+                            <div style="background-color:rgb(45, 145, 226);" id="textC4"></div>
+                    </td>
+                    <td>
+                        <nav id="text-list-box" class="list" style="width:200px;height:400px">
+                        </nav>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <center><button id="btnNext" onclick="next()">เริ่ม</button></center>
+        <script>
+            var socket = io();
+            theQuistions = ['int x = 5','float y = 0.5',"char c = 'a'","fprintf"];
+            theChoices = ['ประกาศตัวแปร integer', 'ประกาศตัวแปร float', 'ประกาศตัวแปร character', 'คำสั่งแสดงค่า'];
+
+            window.onload = function(){
+                if(sessionStorage.getItem('token')==null){
+                    window.location.replace("/login");
+                    return;
+                }
+                let url = new URL(window.location.href);
+                let roomKey = url.searchParams.get("roomKey");
+                console.log(roomKey);
+                if(roomKey !== null){
+                    $('h1').text("รหัสห้อง : "+roomKey);
+                }
+                if(sessionStorage.getItem('token')!==null){
+                    console.log(sessionStorage.getItem('token'));
+                }
+                if(sessionStorage.getItem('room')!==null){
+                    console.log(sessionStorage.getItem('room'));
+                    socket.emit('enter room', {room:sessionStorage.getItem('room'),token:sessionStorage.getItem('token')});
+                }
+            }
+
+            //receive
+            socket.on('room member list', function(data) {
+                $('nav#member-list-box').text('');
+                for(let i in data){
+                    $('nav#member-list-box').append($('<p>').text("#"+(parseInt(i)+1)+" "+data[i]));
+                }
+            });
+
+            socket.on('room', function(data) {
+                $('nav#text-list-box').append($('<p>').text(data));
+            });
+
+            //send
+            function next(){
+                $('button#btnNext').text("ถัดไป");
+                let rng ;
+                let quesNum = Math.floor(Math.random()*4);
+                $('p#textQuestion').text(theQuistions[quesNum]);
+                let num = [0,1,2,3];
+
+                rng = Math.floor(Math.random()*4);
+                $('div#textC1').text("ก."+theChoices[num[rng]]);
+                num.splice(rng,1);
+
+                rng = Math.floor(Math.random()*3);
+                $('div#textC2').text("ข."+theChoices[num[rng]]);
+                num.splice(rng,1);
+
+                rng = Math.floor(Math.random()*2);
+                $('div#textC3').text("ค."+theChoices[num[rng]]);
+                num.splice(rng,1);
+
+                $('div#textC4').text("ง."+theChoices[num[0]]);
+            }
+            
+
+        </script>
+    </body>
+</html>

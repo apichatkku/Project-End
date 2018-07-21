@@ -1,0 +1,97 @@
+<html >
+    <head>
+        <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+        <link rel="stylesheet" type="text/css" href="css/main.css">
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/jquery/1.11.2/jquery.min.js"></script>
+        <script src="/js/client/sha1.js"></script>
+        <style>
+            button.choice {
+                border: 0px solid;
+                color: white;
+                width: 300px;
+                height: 300px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 150px;
+                margin: 5px 5px;
+            }
+            .choice1{
+                background-color: rgb(255, 64, 64);
+            }
+            .choice2{
+                background-color: rgb(233, 210, 0);
+            }
+            .choice3{
+                background-color: rgb(47, 241, 54);
+            }
+            .choice4{
+                background-color: rgb(45, 145, 226);
+            }
+        </style>
+    </head>
+    <body>
+        <h1></h1>
+        <div class="container login">
+            <div>
+                <button class="choice choice1" onclick="sendText('ก')">ก.</button>
+                <button class="choice choice2" onclick="sendText('ข')">ข.</button>
+            </div>
+            <div>
+                <button class="choice choice3" onclick="sendText('ค')">ค.</button>
+                <button class="choice choice4" onclick="sendText('ง')">ง.</button>
+            </div>
+        </div>
+        <script>
+
+            var socket = io();
+
+            window.onload = function(){
+                let url = new URL(window.location.href);
+                let roomKey = url.searchParams.get("roomKey");
+                console.log(roomKey);
+                if(roomKey !== null){
+                    $('h1').text("รหัสห้อง : "+roomKey);
+                }
+                if(sessionStorage.getItem('token')!==null){
+                    console.log(sessionStorage.getItem('token'));
+                }
+                if(sessionStorage.getItem('room')!==null){
+                    console.log(sessionStorage.getItem('room'));
+                    socket.emit('enter room', {room:sessionStorage.getItem('room'),token:sessionStorage.getItem('token')});
+                }
+            }
+
+            //send
+            $('#btnCreateRoom').submit(function(){
+                socket.emit('create room',{token:USER_DATA.token});
+                window.location.replace("/room");
+                return false;
+            });
+
+            //receive
+            socket.on('room member list', function(data) {
+                $('nav#member-list-box').text('');
+                for(let i in data){
+                    $('nav#member-list-box').append($('<p>').text(data[i]));
+                }
+            });
+
+            socket.on('room', function(data) {
+                $('nav#text-list-box').append($('<p>').text(data));
+            });
+
+            function sendText(text){
+                let inputText = "ตอบ "+text;
+                if(inputText != ""){
+                    socket.emit('room', {room:sessionStorage.getItem('room'),token:sessionStorage.getItem('token'),text:inputText});
+                }
+                console.log(555);
+            }
+            
+        </script>
+    </body>
+</html>

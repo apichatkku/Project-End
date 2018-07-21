@@ -1,0 +1,176 @@
+@font-face {
+    font-family: 'layiji_mahaniyom_bao_1.2Rg';
+    src: url('../fonts/layijimahaniyom-bao-1.2-webfont.eot');
+    src: url('../fonts/layijimahaniyom-bao-1.2-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/layijimahaniyom-bao-1.2-webfont.woff2') format('woff2'),
+         url('../fonts/layijimahaniyom-bao-1.2-webfont.woff') format('woff'),
+         url('../fonts/layijimahaniyom-bao-1.2-webfont.ttf') format('truetype'),
+         url('../fonts/layijimahaniyom-bao-1.2-webfont.svg#layiji_mahaniyom_bao_1.2Rg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'layiji_mahaniyom_bao_1';
+    src: url('../fonts/layijimahaniyom-bao-1.2-webfont.eot');
+    src: url('../fonts/layijimahaniyom-bao-1.2-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/layijimahaniyom-bao-1.2-webfont.woff2') format('woff2'),
+         url('../fonts/layijimahaniyom-bao-1.2-webfont.woff') format('woff'),
+         url('../fonts/layijimahaniyom-bao-1.2-webfont.ttf') format('truetype'),
+         url('../fonts/layijimahaniyom-bao-1.2-webfont.svg#layiji_mahaniyom_bao_1.2Rg') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'layiji_mahaniyom_bao_1.2Rg';
+    font-size: 24;
+}
+
+/* box */
+div.container-center {
+    align-content: center;
+    margin: 0 auto;
+    position: absolute;
+    width: 80%;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+}
+
+div.login {
+    padding: 40;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+nav.list {
+    border:1px solid #d3d3d3;
+    overflow:hidden;
+    overflow-y:scroll;
+    overflow-x:scroll;
+}
+
+/* input */
+input.input1 {
+    background: #f5f5f5;
+    text-align: center;
+    min-width: 300;
+    width: 40%;
+    padding: 10px;
+    border: 2px solid #5e5e5e;
+}
+
+/* button */
+.btn1 {
+    background:  white;
+    border: 2px solid black;
+    color: black;
+    font-weight: bold;
+    border-radius: 5px;
+    padding: 15 30;
+    transition-duration: 0.3s;
+    width: 160px;
+}
+
+.btn1:hover {
+    color: #fff;
+    background: black;
+    border: 2px solid black;
+}
+
+.btn1:active {
+    background: white;
+    opacity: 0.5;
+}
+
+/*
+======================== background ==================================
+*/
+.bg-image{
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -999;
+
+    display: block;
+    /*background:linear-gradient(rgba(22, 178, 226, 0.7), rgba(143, 0, 31, 0.7)), url(../images/system/bg1.jpg) center;*/
+    /*filter: blur(5px);*/
+    /*background:linear-gradient(to left, rgba(136, 255, 0, 0.582) 30%, rgba(18, 56, 0, 0.7));*/
+    background:linear-gradient(150deg, #ffd391 30%, #922948);/*99dd33*/
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100%;
+}
+
+/*
+=============== header ===============================================
+*/
+ul.my-header {
+    list-style-type: none;
+    margin: 5px 40px;
+    padding: 0;
+    overflow: hidden;
+    background-color: white;
+}
+
+ul.my-header li {
+    float: left;
+}
+
+ul.my-header li a {
+    display: block;
+    color: black;
+    text-align: center;
+    padding: 0px 20px;
+    font-weight: bold;
+    font-size: 24px;
+    text-decoration: none;
+}
+
+ul.my-header li a:hover:not(.active) {
+    background-color: #f7b5a5;
+}
+
+ul.my-header .active {
+    color:#ffffff;
+    background-color: #e2825d;
+}
+ul.my-header .active:hover {
+    background-color: #e95353;
+}
+ul.my-header div.my-header-right {
+    float:right;
+}
+/*
+======================= footer =============================================
+*/
+ul.my-footer {
+    list-style-type: none;
+    margin: 0px 40px;
+    padding: 0;
+    overflow: hidden;
+    font-size: 18px;
+}
+ul.my-footer li {
+    float: left;
+    display: block;
+    color: white;
+    text-align: left;
+    padding: 0px 50px;
+    text-decoration: none;
+}
+ul.my-footer div.my-footer-right {
+    float:right;
+}
+/*
+======================== body ==============================================
+*/
+div.my-body {
+    margin: 10px 40px;
+    align-self: center; 
+    background-color: white;
+    min-height: 90%;
+    padding: 5px;
+    overflow-x: scroll;
+}

@@ -1,0 +1,52 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+    <div id="div-header"></div>
+    <div class="my-body"></div>
+    <div id="div-footer"></div>
+
+    <script>
+        $(document).ready(function () {
+            $("#div-header").load("header",function(){
+                $("#header-profile").addClass("active");
+            });
+            $("#div-footer").load("footer");
+        });
+    </script>
+
+
+
+    <script>
+        var socket;
+        if (sessionStorage.getItem('token')) {
+            socket = io.connect('', { query: 'token=' + sessionStorage.getItem('token') });
+        } else {
+            socket = io();
+        }
+        window.onload = function () {
+            if (sessionStorage.getItem('token') == null) {
+                window.location.replace("/login");
+                return;
+            }
+            if (sessionStorage.getItem('token') !== null) {
+                console.log(sessionStorage.getItem('token'));
+            }
+            console.log(sessionStorage.getItem('username'), sessionStorage.getItem('firstName'), sessionStorage.getItem('lastName'));
+        }
+    </script>
+</body>
+
+</html>

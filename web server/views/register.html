@@ -1,0 +1,140 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+    <div class="my-body">
+        <div id="register-box" align="center">
+            <h1 style="font-weight: bold">สมัครสมาชิก</h1>
+
+
+            <form id="form-register" action="">
+                <div class="container" style="text-align: left;">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <div class="col-sm-2">
+                                    <label class="col-sm-2 control-label">ชื่อ</label>
+                                </div>
+                                <div class="col-sm-12">
+                                    <input type="text" class="form-control" id="firstname" placeholder="ชื่อ" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-2">
+                                    <label for="input" class="control-label">นามสกุล</label>
+                                </div>
+                                <div class="col-sm-12">
+                                    <input type="text" class="form-control" id="lastname" placeholder="นามสกุล" autocomplete="off">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="col-sm-2">
+                                    <label for="input" class="control-label">username</label>
+                                </div>
+                                <div class="col-sm-12">
+                                    <input type="text" class="form-control" id="username" placeholder="username" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-2">
+                                    <label for="input" class="control-label">รหัสผ่าน</label>
+                                </div>
+                                <div class="col-sm-12">
+                                    <input type="password" class="form-control" id="password" placeholder="password" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-2">
+                                    <label for="input" class="control-label">ยืนยันรหัสผ่าน</label>
+                                </div>
+                                <div class="col-sm-12">
+                                    <input type="password" class="form-control" id="confirmpassword" placeholder="confirmpassword" autocomplete="off">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="col-sm-2">
+                                    <label for="input" class="control-label">email</label>
+                                </div>
+                                <div class="col-sm-12">
+                                    <input type="email" class="form-control" id="email" placeholder="email" autocomplete="off">
+                                </div>
+                                <p style="text-align:center" id="message-wrong-register" style="color:rgb(112, 0, 0)"></p>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                <button class="btn1">ยืนยัน</button>
+            </form>
+        </div>
+        <div id="div-footer"></div>
+        <script>
+            $(document).ready(function () {
+                $("#div-footer").load("footer");
+            });
+        </script>
+        <script>
+
+            window.onload = function () {
+                sessionStorage.clear();
+                console.log(sessionStorage.length);
+                if (sessionStorage.getItem('token') !== null) {
+                    console.log(sessionStorage.getItem('token'));
+                }
+            }
+
+            var socket = io();
+            //send login
+            $('#form-register').submit(function () {
+                console.log("5555555");
+                $('#message-wrong-register').html("");
+                try {
+                    let firstname = $('#firstname').val();
+                    let lastname = $('#lastname').val();
+                    let username = $('#username').val();
+                    let password = $('#password').val();
+                    let confirmpassword = $('#confirmpassword').val();
+                    let email = $('#email').val();
+                    if (firstname != "" && lastname != "" && username != "" && password != "" && confirmpassword != "" && email != "") {
+                        socket.emit('register', {
+                            firstname: firstname, lastname: lastname, username: username,
+                            password: password, confirmpassword: confirmpassword, email: email
+                        });
+                    }
+                    console.log(firstname + "," + lastname);
+                } catch (error) {
+                    console.log(error);
+                }
+                return false; // ทำให้หน้าไม่ refresh
+            });
+
+            //receive
+            //register
+            socket.on('register', function (data) {
+                if (data.msgerror == "") { //check status is true
+                    window.location.href = "/register-finish";
+                } else {
+                    //alert("Username is already !\n Please enter password of this username or enter new username.");
+                    //window.location.replace("https://www.google.co.th");
+
+                    $('#message-wrong-register').html(data.msgerror);
+                }
+
+            });
+        </script>
+</body>
+
+</html>

@@ -1,0 +1,109 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+</head>
+<style>
+    .myh1 {
+        font-size: 40;
+        font-weight: bold;
+        color: black;
+        text-align: center;
+        margin-top: 0;
+    }
+
+    .myh2 {
+        font-size: 30;
+        font-weight: bold;
+        color: black;
+        text-align: center;
+        margin-top: 0;
+    }
+</style>
+
+<body>
+    <div class="bg-image"></div>
+    <div class="bg1"></div>
+    <div class="container-center">
+        <div id="login-box" class="login" align="center">
+            <h1 style="font-weight: bold">ลงชื่อเข้าใช้</h1>
+            <form id="form-login" action=''>
+                <p>
+                    <input class="input1" type="text" id="username" placeholder="ชื่อผู้ใช้" autocomplete="off">
+                </p>
+                <p>
+                    <input class="input1" type="password" id="password" placeholder="รหัสผ่าน" autocomplete="off">
+                </p>
+                <p id="message-wrong-login" style="color:rgb(112, 0, 0)"></p>
+                <button class="btn1">เข้าสู่ระบบ</button>
+                <input class="btn1" type="button" onclick="window.location.href = '/register'" value="สมัครสมาชิก">
+            </form>
+            <div class="myh1">แอปพลิเคชันเพื่อเสริมสร้างทักษะการเขียนโปรแกรม</div>
+            <div class="myh2">ใช้ร่วมในการเรียนการสอนในห้องเรียน
+                <br>เพื่อเสริมสร้างกิจกรรมการเรียนรู้แบบมีส่วนร่วมภายในห้องเรียน
+            </div>
+        </div>
+    </div>
+    <script>
+
+        window.onload = function () {
+            sessionStorage.clear();
+            console.log(sessionStorage.length);
+            if (sessionStorage.getItem('token') !== null) {
+                console.log(sessionStorage.getItem('token'));
+            }
+        }
+
+        var name = "";
+        var ROOM = "chat123";
+        var socket = io();
+        //send login
+        $('#form-login').submit(function () {
+            try {
+                let username = $('#username').val();
+                let password = $('#password').val();
+                let key = "";
+                if (username != "" && password != "") {
+                    key = SHA1(password);
+                    socket.emit('login', { username: username, key: key });
+                } else {
+                    $('#message-wrong-login').html("\"ชื่อผู้ใช้\" หรือ \"รหัสผ่าน\" ไม่ถูกต้อง กรูณาลองใหม่อีกครั้ง");
+                }
+                console.log(username + "," + key);
+            } catch (error) {
+                console.log(error);
+            }
+            return false; // ทำให้หน้าไม่ refresh
+        });
+
+        //receive
+        //login
+        socket.on('login', function (data) {
+            if (data.status) { //check status is true
+                let user = data.user;
+                let token = data.token;
+                sessionStorage.setItem('token', token);
+                sessionStorage.setItem('username', user.username);
+                sessionStorage.setItem('firstName', user.firstName);
+                sessionStorage.setItem('lastName', user.lastName);
+                //window.location.replace("/home");
+                window.location.href = "/home";
+            } else {
+                //alert("Username is already !\n Please enter password of this username or enter new username.");
+                //window.location.replace("https://www.google.co.th");
+
+                $('#message-wrong-login').html("\"ชื่อผู้ใช้\" หรือ \"รหัสผ่าน\" ไม่ถูกต้อง กรูณาลองใหม่อีกครั้ง");
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,152 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+   <div id="div-header"></div>
+   <div class="my-body">
+       <div class="bg-image"></div>
+       <div id="div-header"></div>
+       <div class="my-body">
+           <div class="container">
+               <h2>ค้นหาโจทย์คำถาม</h2>
+               <input style="font-size: 22px" class="form-control" id="myInput" type="text" placeholder="ค้นหา..">
+               <br>
+               <table class="table table-bordered table-striped">
+               </table>
+           </div>
+
+           <div align="center">
+               <div id="div-quiz-list" style="width: 90%">
+               </div>
+           </div>
+
+       </div>
+   </div>
+   <div id="div-footer"></div>
+
+   <script>
+       $(document).ready(function () {
+           $("#div-header").load("header", function () {
+               $("#header-findProposition").addClass("active");
+           });
+           $("#div-footer").load("footer");
+       });
+   </script>
+
+   <script>
+       $(document).ready(function () {
+           $("#myInput").on("keyup", function () {
+               findQuiz($('#myInput').val());
+           });
+       });
+   </script>
+
+   <script>
+       var socket;
+       if (sessionStorage.getItem('token')) {
+           socket = io.connect('', { query: 'token=' + sessionStorage.getItem('token') });
+       } else {
+           socket = io();
+       }
+       window.onload = function () {
+           if (sessionStorage.getItem('token') == null) {
+               window.location.replace("/login");
+               return;
+           }
+           if (sessionStorage.getItem('token') !== null) {
+               console.log(sessionStorage.getItem('token'));
+           }
+           console.log(sessionStorage.getItem('username'), sessionStorage.getItem('firstName'), sessionStorage.getItem('lastName'));
+           getFindQuiz();
+       }
+
+       function getFindQuiz() {
+           socket.emit('get-quiz-find', { token: sessionStorage.getItem('token') });
+
+           /*for (var i = 0; i < document.getElementById('quiz').elements.length; i++) {
+                document.getElementById('quiz').elements[i].checked = checked;
+            }*/
+
+          
+       }
+
+       var qlist;
+       socket.on('get-quiz', function (data) {
+           if (data.err) return;
+           qlist = data.qlist;
+           findQuiz($('#myInput').val());
+       });
+
+       function findQuiz(keyword) {
+           document.getElementById("div-quiz-list").innerHTML = "";
+           let qlistDummy = qlist.slice();
+           for (let i = 0; i < qlist.length; i++) {
+               let name = qlist[i].name.toLowerCase();
+               let desc = qlist[i].description.toLowerCase();
+               let owner = (qlist[i].firstName+" "+qlist[i].lastName).toLowerCase();
+               console.log(keyword)
+               if (name.indexOf(keyword.toLowerCase()) < 0 && desc.indexOf(keyword.toLowerCase()) < 0 && owner.indexOf(keyword.toLowerCase()) < 0) {
+                   continue;
+               }
+               let box = document.createElement("div");
+               box.style.minHeight = "90px";
+               box.style.padding = "10px";
+               box.style.margin = "10px";
+               box.style.boxShadow = "1px 1px 10px coral";
+               box.style.width = "90%";
+               console.log(qlist[i]);
+               box.innerHTML = "<div style='float:left;'><div style='text-align:left;font-size:30px'><u>โจทย์ " + qlist[i].name + "</u></div>" +
+                    "<div style='text-align:left'>โดย  " + qlist[i].firstName + " " + qlist[i].lastName +"</div></div>" +
+                   "<div style='float:right'>" +
+                   "<button onclick='playQuiz(" + qlist[i].qid + ")'>ทำแบบทดสอบ</button>" +
+                   "<button onclick='viewQuiz(" + qlist[i].qid + ")'>ดู</button>" +
+                   "</div>";
+               document.getElementById("div-quiz-list").appendChild(box);
+           }
+       }
+
+       //ไว้ทำให้กดดูได้
+       function viewQuiz(qid) {
+           window.location.href = "/create-quiz?qid=" + qid;
+       }
+       //ไว้ทำให้กดทำแบบทดสอบเล่นได้
+       var Q_ID = "";
+       function playQuiz(qid) {
+           Q_ID = qid;
+           socket.emit('create room', { token: sessionStorage.getItem('token') });
+           console.log('click create room');
+           return false;
+       }
+
+       function deleteQuiz(qid) {
+           var pop = confirm("ยืนยันการลบ!");
+           if (pop == true) {
+               socket.emit('delete-quiz', { token: sessionStorage.getItem('token'), qid: qid });
+           } else {
+           }
+       }
+
+       socket.on('delete-quiz', function (data) {
+           if (data.err) return;
+           getFindQuiz();
+       })
+
+       function test1() {
+           socket.emit('test', { id: "1" });
+       }
+   </script>
+</body>
+
+</html>

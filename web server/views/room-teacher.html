@@ -1,0 +1,772 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+
+    <script src="/blockly/custom/acorn_interpreter.js"></script>
+    <script src="/blockly/blockly_compressed.js"></script>
+    <script src="/blockly/blocks_compressed.js"></script>
+    <script src="/blockly/javascript_compressed.js"></script>
+    <script src="/blockly/msg/js/en.js"></script>
+    <script src="/blockly/custom/customblocks.js"></script>
+
+    <style>
+
+        h1 {
+            font-size: 50px;
+        }
+
+        table {
+            background-color: #fff;
+            font-size: 26px;
+        }
+
+        table#tbscore {
+            width: 90%;
+            border-collapse: collapse;
+        }
+
+        table#tbscore,
+        td.tbscore,
+        th.tbscore {
+            padding: 0px 0px;
+            text-align: center;
+            border: 1px solid black;
+        }
+
+        td {
+            padding: 10px 10px;
+        }
+
+        button {
+            align-content: left;
+        }
+
+        #myCanvas:hover {
+            cursor: url(images/system/cursor.cur) 2 2, auto;
+        }
+
+        pre {
+            font-size: 18px;
+            max-width: 480px;
+            background-color: #fff;
+            line-height: 15px;
+            counter-reset: line;
+        }
+
+        pre span {
+            display: block;
+            line-height: 1.5rem;
+        }
+
+        pre span:before {
+            counter-increment: line;
+            content: counter(line);
+            display: inline-block;
+            border-right: 1px solid #ddd;
+            margin-right: .5em;
+            color: #888;
+            min-width: 30px;
+        }
+
+        pre span.spanSelect {
+            background-color: yellow;
+        }
+
+        nav#variable-list-box {
+            margin: 5px;
+            font-size: 20px;
+            font-family: Arial;
+        }
+
+        nav#variable-list-box p {
+            margin: 5px;
+        }
+
+        /*Blockly to Code*/
+
+        .div-code {
+            border: 1px solid lightgrey;
+            padding-top: 10px;
+            padding-left: 30px;
+            font-family: Arial;
+            font-size: 18px;
+            font-weight: normal;
+            text-align: left;
+            overflow: scroll;
+        }
+
+        .div-code .stage {
+            margin-left: 40px;
+        }
+
+        .div-code div {
+            background: white;
+        }
+
+        .div-code .hl {
+            background: yellow;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+    <div id="div-header"></div>
+    <div class="my-body">
+        <div align="center">
+            <h1>รหัสห้อง : ----</h1>
+            <div id="quiz-name" style="font-size: 40px">---</div>
+            <table width="100%" height="600">
+                <tr>
+                    <td width="540px">
+                        <button onclick="$('#div-code').toggle();$('#blocklyDiv').toggle();">สลับ</button>
+                        <div class="div-code" id="div-code" style="display: none; height: 380px; width: 100%">code</div>
+                        <div id="blocklyDiv" style="display:block; height: 380px; width: 100%"></div>
+                        <textarea id="output" disabled="disabled" style="display: inline-block; height: 200px; width: 100%;"></textarea>
+                    </td>
+                    <td>
+                        <center>
+                            <canvas id="myCanvas" width="600" height="150" style="border:1px solid #d3d3d3;">
+                                Your browser does not support the HTML5 canvas tag.</canvas>
+                        </center>
+                        <script>
+                            var cnv = document.getElementById("myCanvas");
+                            cnv.oncontextmenu = function (e) {
+                                return false;
+                            }
+
+                        </script>
+                        <center id="member-box">
+                            <p id="member-box-title" style="margin-top:20px;font-size:40px;">รายชื่อผู้เข้าร่วม</p>
+                            <input type="image" id="btnDownloadExcel" src="images/system/excel_icon.png" align="right" style="margin-right:50px;display:none;"
+                                width="48" height="48" onClick="fnExcelReport();" value="download" />
+                            <a href="#" id="testAnchor"></a>
+                            <script>
+
+                                        //$("#btnDownloadExcel").appendTo("#member-box"); ย้าย element -> destination
+                            </script>
+                            <script src="/js/client/create_excel_report.js"></script>
+                            <nav id="member-list-box" oncontextmenu="event.preventDefault()" class="list" style="width:90%;height:300">
+                                <p>loading ... </p>
+                            </nav>
+                        </center>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div id="div-footer"></div>
+
+    <script>
+        $(document).ready(function () {
+            $("#div-header").load("header", function () {
+                $("#header-exam").addClass("active");
+            });
+            $("#div-footer").load("footer");
+        });
+    </script>
+
+    <xml id="toolbox" style="display: none">
+        <category name="ตัวแปร">
+            <block type="my_declare_variable"></block>
+            <block type="my_setvariable"></block>
+            <block type="my_variable"></block>
+        </category>
+        <category name="กำหนดค่า">
+            <block type="my_scanf"></block>
+            <block type="my_number"></block>
+            <block type="my_math"></block>
+        </category>
+        <category name="แสดงผล">
+            <block type="my_string"></block>
+            <block type="my_printf"></block>
+        </category>
+        <category name="เงื่อนไข">
+            <block type="my_condition"></block>
+            <block type="my_compare"></block>
+            <block type="my_if"></block>
+            <block type="my_ifelse"></block>
+        </category>
+        <category name="ทำซ้ำ">
+            <block type="my_while"></block>
+            <block type="my_dowhile"></block>
+            <block type="my_for"></block>
+        </category>
+        <category name="สร้างตัวแปร" custom="VARIABLE"></category>
+        <category name="คำถาม">
+            <block type="ask_setvariable"></block>
+            <block type="ask_if"></block>
+            <block type="ask_ifelse"></block>
+            <block type="ask_while"></block>
+            <block type="ask_dowhile"></block>
+        </category>
+    </xml>
+
+    <script>
+        var socket = io();
+
+        var numQA = 0;//ข้อที่
+        var numStdAns = [0, 0, 0, 0];//จำนวน นร ที่ตอบแต่ละข้อ
+
+        //-- init
+        var STATE = "waiting";
+        var QA_STATE = false;
+        var TIMER = 0;
+        var COUNTDOWN = 10;
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+        //ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var img = new Image(100, 200);
+        img.src = "images/system/cursor.cur";
+
+        //----------------------------- B U T T O N ---------
+        var Button = function (name, x, y, w, h) {
+            this.name = name;
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+        }
+        var waitingBtns = [];
+        var playingBtns = [];
+        var ansBtns = [];
+        waitingBtns.push(new Button("start", 0, 0, 600, 150));
+        ansBtns.push(new Button("next", 610, 5, 110, 40));
+        ansBtns[0].isHold = false;
+        ansBtns[0].draw = function () {
+            if (!this.isHold) {
+                ctx.fillStyle = "rgb(255, 215, 0)";
+                ctx.fillRect(this.x, 5, 110, 45);
+                ctx.fillStyle = "rgb(255, 165, 0)";
+                ctx.fillRect(this.x, 25, 110, 25);
+                ctx.fillStyle = "darkred";
+                ctx.textAlign = "center";
+                ctx.font = "bold 40px layiji_mahaniyom_bao_1";
+                ctx.fillText("ถัดไป", this.x + this.w / 2, 40);
+            } else {
+                ctx.fillStyle = "rgb(255, 175, 0)";
+                ctx.fillRect(this.x, 5, 110, 45);
+                ctx.fillStyle = "rgb(255, 125, 0)";
+                ctx.fillRect(this.x, 25, 110, 25);
+                ctx.fillStyle = "BlanchedAlmond";
+                ctx.textAlign = "center";
+                ctx.font = "bold 36px layiji_mahaniyom_bao_1";
+                ctx.fillText("ถัดไป", this.x + this.w / 2, 40);
+            }
+        }
+
+
+        window.onload = function () {
+            if (sessionStorage.getItem('token') == null) {
+                window.location.replace("/login");
+                return;
+            }
+            //------begin
+
+            let url = new URL(window.location.href);
+            let roomKey = url.searchParams.get("roomKey");
+            if (roomKey !== null) {
+                $('h1').text("รหัสห้อง : " + roomKey);
+            }
+            if (sessionStorage.getItem('token') !== null) {
+                console.log(sessionStorage.getItem('token'));
+            }
+            if (sessionStorage.getItem('room') !== null) {
+                console.log(sessionStorage.getItem('room'));
+                socket.emit('enter room', { room: sessionStorage.getItem('room'), token: sessionStorage.getItem('token') });
+            }
+
+            //set up
+            let qid = url.searchParams.get("qid");
+            if (qid !== null) {
+                Q_ID = qid;
+                getQuiz();
+            }
+
+            //------draw
+            drawWaiting();
+        }
+
+        //
+        function isInside(pos, rect) {
+            return pos.x > rect.x && pos.x < rect.x + rect.w && pos.y < rect.y + rect.h && pos.y > rect.y;
+        }
+
+        function getMousePos(canvas, event) {
+            var rect = canvas.getBoundingClientRect();
+            return {
+                x: event.clientX - rect.left,
+                y: event.clientY - rect.top
+            };
+        }
+
+        //---------------------------      ===== E V E N T ====       --------------------------
+        canvas.addEventListener('click', function (evt) {
+            //test
+            let mousePos = getMousePos(canvas, evt);
+            console.log(mousePos);
+            console.log(STATE);
+            let button = "";
+            if (STATE == "waiting") {
+                for (let i in waitingBtns) {
+                    let rect = { x: waitingBtns[i].x, y: waitingBtns[i].y, w: waitingBtns[i].w, h: waitingBtns[i].h }
+                    if (isInside(mousePos, rect)) {
+                        button = waitingBtns[i].name;
+                        break;
+                    }
+                }
+                switch (button) {
+                    case "start":
+                        startGame();
+                        break;
+                    case "next":
+                        break;
+                    default:
+                        break;
+                }
+            } else if (STATE == "playing") {
+                //some
+            } else if (STATE == "ans") {
+                for (let i in ansBtns) {
+                    let rect = { x: ansBtns[i].x, y: ansBtns[i].y, w: ansBtns[i].w, h: ansBtns[i].h }
+                    if (isInside(mousePos, rect)) {
+                        button = ansBtns[i].name;
+                        break;
+                    }
+                }
+                if (button == "next") {
+                    numQA++;
+                    STATE = "nexting";
+                    drawWaitCode();
+                    stepGame();
+                }
+            }
+        }, false);
+        canvas.addEventListener('mouseover', function (evt) {
+            let mousePos = getMousePos(canvas, evt);
+            if (STATE == "waiting") {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#285d91";
+                ctx.fillRect(0, 0, 600, 75);
+                ctx.fillStyle = "#0f4477";
+                ctx.fillRect(0, 75, 600, 75);
+                ctx.fillStyle = "#3c80c1";
+                ctx.fillRect(210, 10, 280, 10);
+                ctx.fillRect(520, 10, 20, 10);
+                ctx.textAlign = "center";
+                ctx.fillStyle = "#d6ebff";
+                ctx.font = "140px layiji_mahaniyom_bao_1";
+                ctx.fillText("เริ่มทดสอบ", 600 / 2, 150 / 2 + 60 - 10);
+            }
+        }, false);
+        canvas.addEventListener('mouseout', function (evt) {
+            if (STATE == "waiting") {
+                drawWaiting();
+            }
+        }, false);
+        canvas.addEventListener('mousemove', function (evt) {
+            let mousePos = getMousePos(canvas, evt);
+            if (STATE == "ans") {
+                let rect = { x: ansBtns[0].x, y: ansBtns[0].y, w: ansBtns[0].w, h: ansBtns[0].h }
+                if (isInside(mousePos, rect)) {
+                    ansBtns[0].isHold = true;
+                    ansBtns[0].draw();
+                } else {
+                    ansBtns[0].isHold = false;
+                    ansBtns[0].draw();
+                }
+            }
+        }, false);
+
+        //-------------------------- D R A W -----------------------------
+
+        function drawWaiting() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#00264d";
+            ctx.fillRect(0, 0, 600, 75);
+            ctx.fillStyle = "#001a33";
+            ctx.fillRect(0, 75, 600, 75);
+            ctx.fillStyle = "#355b99";
+            ctx.fillRect(200, 10, 300, 10);
+            ctx.fillRect(520, 10, 50, 10);
+            ctx.fillStyle = "#cce6ff";
+            ctx.textAlign = "center";
+            ctx.font = "170px layiji_mahaniyom_bao_1";
+            ctx.fillText("เริ่มทดสอบ", 600 / 2, 150 / 2 + 60);
+        }
+
+        function drawQA() {
+            if (QA_STATE == false) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            var now = new Date().getTime();
+            var distance = TIMER - now;
+            var seconds = Math.round((distance % (1000 * 60)) / 1000);
+            seconds = (seconds < 0) ? 0 : seconds;
+
+            //draw time
+            ctx.fillStyle = "#e8e8e8";
+            ctx.fillRect(50, 40, 700, 15);
+            if (seconds <= 0) {
+                ctx.font = "bold 40px layiji_mahaniyom_bao_1";
+                ctx.fillStyle = "darkred";
+            } else if (seconds <= 2) {
+                ctx.fillStyle = "red";
+            } else if (seconds <= 3) {
+                ctx.fillStyle = "Orange";
+            } else if (seconds <= 5) {
+                ctx.fillStyle = "gold";
+            } else {
+                ctx.fillStyle = "YellowGreen";
+            }
+            ctx.fillRect(50, 40, (now - TIMER + COUNTDOWN * 1000) * 700 / COUNTDOWN / 1000, 15);
+            ctx.textAlign = "center";
+            if (seconds <= 3 && seconds > 0) {
+                if (Math.round((distance % (1000 * 60)) / 100) % 2 == 0) {
+                    ctx.font = "bold 45px layiji_mahaniyom_bao_1";
+                } else {
+                    ctx.font = "bold 40px layiji_mahaniyom_bao_1";
+                }
+            } else {
+                ctx.font = "bold 40px layiji_mahaniyom_bao_1";
+            }
+            ctx.fillText(seconds + " วินาที", 800 / 2, 30);
+            //draw QA
+
+            ctx.fillStyle = "#000";
+            ctx.textAlign = "center";
+            ctx.font = "40px layiji_mahaniyom_bao_1";
+
+            ctx.fillText("ข้อ" + (numQA + 1).toString() + ". " + textQuestion, 800 / 2, 140);
+            ctx.fillStyle = "#ff4f3f";
+            ctx.fillRect(100, 100 + 80 * 1, 600, 50);
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(100, 100 + 80 * 2, 600, 50);
+            if (textChoices.length != 2) { // ถ้ามีมากกว่า 2 ตัวเลือก
+                ctx.fillStyle = "LawnGreen";
+                ctx.fillRect(100, 100 + 80 * 3, 600, 50);
+                ctx.fillStyle = "DeepSkyBlue";
+                ctx.fillRect(100, 100 + 80 * 4, 600, 50);
+            }
+
+            ctx.fillStyle = "black";
+            ctx.textAlign = "left";
+            ctx.font = "35px layiji_mahaniyom_bao_1";
+            if (textChoices.length == 2) {
+                ctx.fillText("ก." + textChoices[0], 120, 100 + 80 * 1 + 30);
+                ctx.fillText("ข." + textChoices[1], 120, 100 + 80 * 2 + 30);
+            } else {
+                ctx.fillText("ก." + textChoices[0], 120, 100 + 80 * 1 + 30);
+                ctx.fillText("ข." + textChoices[1], 120, 100 + 80 * 2 + 30);
+                ctx.fillText("ค." + textChoices[2], 120, 100 + 80 * 3 + 30);
+                ctx.fillText("ง." + textChoices[3], 120, 100 + 80 * 4 + 30);
+            }
+
+
+            if (distance <= 0 || skipQA == true) {
+                skipQA = false;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                QA_STATE = false;
+                stopQA();
+                return;
+            }
+            window.requestAnimationFrame(drawQA);
+        }
+        var skipQA = false;
+
+        function drawAns() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.font = "40px layiji_mahaniyom_bao_1";
+            ctx.fillText("เฉลย " + textAnswer, 800 / 2, 100);
+
+            let nA = numStdAns[0];
+            let nB = numStdAns[1];
+            let nC = numStdAns[2];
+            let nD = numStdAns[3];
+            let nMax = nA + nB + nC + nD;
+
+            //จำนวนตอบ
+            ctx.fillStyle = "#ff4f3f";
+            ctx.fillRect(100, 150 + (200 - nA * 200 / nMax), 120, nA * 200 / nMax);
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(100 + 120 * 1 + 40, 150 + (200 - nB * 200 / nMax), 120, nB * 200 / nMax);
+            if (textChoices.length != 2) { //ถ้ามีมากกว่า2ตัวเลือก
+                ctx.fillStyle = "LawnGreen";
+                ctx.fillRect(100 + 120 * 2 + 40 * 2, 150 + (200 - nC * 200 / nMax), 120, nC * 200 / nMax);
+                ctx.fillStyle = "DeepSkyBlue";
+                ctx.fillRect(100 + 120 * 3 + 40 * 3, 150 + (200 - nD * 200 / nMax), 120, nD * 200 / nMax);
+            }
+
+            numStdAns[0] = 0;
+            numStdAns[1] = 0;
+            numStdAns[2] = 0;
+            numStdAns[3] = 0;
+
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.font = "35px layiji_mahaniyom_bao_1";
+            ctx.fillText("ก.", 100 + 60, 390);
+            ctx.fillText(nA, 100 + 60, 340);
+            ctx.fillText("ข.", 100 + 120 * 1 + 40 + 60, 390);
+            ctx.fillText(nB, 100 + 120 * 1 + 40 + 60, 340);
+            if (textChoices.length != 2) { //ถ้ามีมากกว่า2ตัวเลือก
+                ctx.fillText("ค.", 100 + (120 + 40) * 2 + 60, 390);
+                ctx.fillText(nC, 100 + (120 + 40) * 2 + 60, 340);
+                ctx.fillText("ง.", 100 + (120 + 40) * 3 + 60, 390);
+                ctx.fillText(nD, 100 + (120 + 40) * 3 + 60, 340);
+            }
+
+            for (let i = 0; i < 3 && i < students.length; i++) {
+                ctx.fillStyle = "black";
+                ctx.textAlign = "center";
+                ctx.font = "28px layiji_mahaniyom_bao_1";
+                ctx.fillText("อันดับ " + (i + 1) + " " + students[i].name + " ทำได้ " + students[i].score + " คะแนน",
+                    canvas.width / 2, 450 + (35 * i));
+            }
+
+            ctx.beginPath();
+            ctx.arc(100 + (120 + 40) * textChoices.indexOf(textAnswer) + 60, 385, 20, 0, 2 * Math.PI, false);
+            ctx.strokeStyle = "#6cff11";
+            ctx.lineWidth = 5;
+            ctx.stroke();
+
+            ansBtns[0].draw();
+        }
+
+        function drawWaitCode() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "black";
+            ctx.textAlign = "center";
+            ctx.font = "80px layiji_mahaniyom_bao_1";
+            ctx.fillText("กำลังรอคำถาม...", 800 / 2, 300);
+        }
+
+        //-------------------------- C O N T R O L ------------------------
+        function startGame() {
+            $('#member-box').hide();
+            canvas.width = 800; // in pixels
+            canvas.height = 540;
+            STATE = "playing";
+            stepCode();
+            highlightPause = true;
+            window.setTimeout(stepGame, 1000);
+        }
+
+        function startQA() {
+            QA_STATE = true;
+            STATE = "playing";
+            TIMER = new Date().getTime() + COUNTDOWN * 1000;
+            window.requestAnimationFrame(drawQA);
+        }
+
+        function stopQA() {
+            STATE = "ans";
+            for (let i in students) {
+                if (students[i].select != -1) {
+                    numStdAns[students[i].select]++;
+                }
+                students[i].check = "no";
+                console.log("check" + students[i].select, textChoices.indexOf(textAnswer));
+                if (students[i].select == textChoices.indexOf(textAnswer)) {
+                    console.log("คะแนน " + students[i].name + " = " + students[i].score);
+                    students[i].correct++;
+                    students[i].score += TIMER - students[i].time;
+                    students[i].check = "yes";
+                }
+                students = students.sort(compareToSort);
+                students[i].select = -1;
+                students[i].TIMER = 0;
+            }
+            socket.emit('QA-tch', { room: sessionStorage.getItem('room'), token: sessionStorage.getItem('token'), std: students });
+            drawAns();
+        }
+
+        function stepGame() {
+            if (myInterpreter == null) {
+                STATE = "end";
+                showEnd();
+                return;
+            }
+            if (QA_STATE == false) {
+                try {
+                    stepCode();
+                } catch (error) {
+                    console.log(error);
+                }
+                window.setTimeout(stepGame, 800);
+            }
+        }
+
+        //------------------- S H O W ---------------
+
+        function showEnd() {
+            console.log(students + "TESTTTTTTT");
+            $('#myCanvas').hide();
+            $('#member-box').show();
+            $('#member-box-title').text("สรุปคะแนน");
+            $('#member-list-box').show();
+            document.getElementById("member-list-box").style.height = "500px";
+            $('#member-list-box').text('');
+            console.log(students);
+            students = students.sort(compareToSort);
+            for (let i = 0; i < 3 && i < students.length; i++) {
+                let tagRank = "<p>";
+                switch (Number(i) + 1) {
+                    case 1:
+                        tagRank = '<p style="color:gold;font-size:45px;font-weight:800;">';
+                        break;
+                    case 2:
+                        tagRank = '<p style="color:silver;font-size:45px;font-weight:800;">';
+                        break;
+                    case 3:
+                        tagRank = '<p style="color:#e36600;font-size:45px;font-weight:800;">';
+                        break;
+                }
+                $('#member-list-box').append($(tagRank).text("อันดับ " + (parseInt(i) + 1) + " " + students[i].name + " ทำได้ " + students[i].score + " คะแนน"));
+            }
+
+            //แสดงปุ่มโหลดไฟล์ excel
+            $("#btnDownloadExcel").appendTo("#member-list-box");
+            $("#btnDownloadExcel").show();
+            $('#member-list-box').append($('<p>').text(''));
+            //หัวข้อตาราง
+            $('#member-list-box').append($('<u style="font-size:32px;">').text('ตารางคะแนน'));
+            //สร้างตาราง html
+            var tb = document.createElement("TABLE");
+            tb.setAttribute("id", "tbscore");
+            document.getElementById("member-list-box").appendChild(tb);
+            //สร้างหัวตาราง html
+            var tr = document.createElement("TR");
+            tb.appendChild(tr);
+            var row = '';
+            row += '<th class="tbscore" width="20%">อันดับ</th>';
+            row += '<th class="tbscore" width="40%">ชื่อ</th>';
+            row += '<th class="tbscore" width="20%">คะแนน</th>';
+            row += '<th class="tbscore" width="20%">ทำได้/ข้อ</th>';
+            tr.innerHTML = row;
+            //ใส่ข้อมูลลงตาราง html
+            for (let i in students) {
+                var tr = document.createElement("TR");
+                document.getElementById("tbscore").appendChild(tr);
+                var row = '';
+                row += '<td class="tbscore">' + (Number(i) + 1) + '</td>';
+                row += '<td class="tbscore">' + students[i].name + '</td>';
+                row += '<td class="tbscore">' + students[i].score + '</td>';
+                row += '<td class="tbscore">' + students[i].correct + '</td>';
+                tr.innerHTML = row;
+            }
+
+            /*for (let i = students.length + 1; i < 50; i++) {
+                var tr = document.createElement("TR");
+                document.getElementById("tbscore").appendChild(tr);
+                var row = '';
+                row += '<td class="tbscore">' + i + '</td>';
+                row += '<td class="tbscore">' + 57302 + (Math.ceil(Math.random() * 10000)) + "-" + (Math.ceil(Math.random() * 10)) + '</td>';
+                row += '<td class="tbscore">' + 0 + '</td>';
+                row += '<td class="tbscore">' + 0 + '</td>';
+                tr.innerHTML = row;
+            }*/
+
+            //บันทึกลงฐานข้อมูล
+
+            let history = {};
+            history.qid = Q_ID;
+            history.username = sessionStorage.getItem("username");
+            history.date = new Date();
+            history.students = JSON.stringify(students);
+            socket.emit('save-history', {history:history, token:sessionStorage.getItem("token")});
+        }
+
+        function compareToSort(a, b) {
+            if (a.score > b.score)
+                return -1;
+            if (a.score < b.score)
+                return 1;
+            return 0;
+        }
+
+    </script>
+
+    <script>
+        var students = [];
+        var Student = function (name) {
+            this.name = name;
+            this.correct = 0;
+            this.score = 0;
+            this.select = -1;
+            this.time = 0;
+            this.check = "no";
+        }
+
+        //receive
+        socket.on('room member list', function (data) {
+            $('nav#member-list-box').text('');
+            for (let i in data) {
+                if (students.findIndex(x => x.name == data[i]) == -1) {
+                    let std = new Student(data[i]);
+
+                    students.push(std);
+                }
+                $('nav#member-list-box').append($('<p>').text("#" + (parseInt(i) + 1) + " " + data[i]));
+            }
+        });
+
+        socket.on('QA-tch', function (data) {
+            console.log(data);
+            let iStd = students.findIndex(x => x.name == data.name);
+            if (iStd == -1) {
+                return;
+            } else if (STATE == "playing") {
+                students[iStd].select = data.text;
+                students[iStd].time = new Date().getTime();
+            }
+        });
+
+        socket.on();
+    </script>
+
+    <!--          
+        ====================================    BLOCKLY SCRIPT  ====================================
+        ============================================================================================
+    -->
+
+    <script src="/js/client/blocklyController.js"></script>
+    <script>
+        var Q_ID = "";
+        function getQuiz() {
+            socket.emit('get-quiz-id', { token: sessionStorage.getItem('token'), qid: Q_ID });
+        }
+
+        socket.on('get-quiz', function (data) {
+            if (data.err) {
+                alert("เกิดข้อผิดพลาด");
+                window.location.href = "/home";
+            } else {
+                console.log();
+                let quiz = data.qlist[0];
+                $('#quiz-')
+                console.log(data.qlist);
+                $('#quiz-name').text(quiz.name);
+                $('#div-code').show();
+                blocklyOpen(quiz.xmlcode);
+                $('#blocklyDiv').hide();
+            }
+        });
+    </script>
+
+
+</body>
+
+</html>

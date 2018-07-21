@@ -1,0 +1,111 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+    <div id="div-header"></div>
+    <div class="my-body">
+        <div align="center">
+            <div style="font-size: 36px;font-weight: bold">โจทย์ของคุณ</div>
+            <div id="div-quiz-list" style="width: 90%">
+            </div>
+        </div>
+    </div>
+    <div id="div-footer"></div>
+
+    <script>
+        $(document).ready(function () {
+            $("#div-header").load("header", function () {
+                $("#header-home").addClass("active");
+            });
+            $("#div-footer").load("footer");
+        });
+    </script>
+
+    <script>
+        var socket;
+        if (sessionStorage.getItem('token')) {
+            socket = io.connect('', { query: 'token=' + sessionStorage.getItem('token') });
+        } else {
+            socket = io();
+        }
+        window.onload = function () {
+            if (sessionStorage.getItem('token') == null) {
+                window.location.replace("/login");
+                return;
+            }
+            if (sessionStorage.getItem('token') !== null) {
+                console.log(sessionStorage.getItem('token'));
+            }
+            console.log(sessionStorage.getItem('username'), sessionStorage.getItem('firstName'), sessionStorage.getItem('lastName'));
+            getMyQuiz();
+        }
+
+        function getMyQuiz() {
+            socket.emit('get-quiz-username', { token: sessionStorage.getItem('token') });
+            document.getElementById("div-quiz-list").innerHTML = "";
+        }
+
+        socket.on('get-quiz', function (data) {
+            if (data.err) return;
+            let qlist = data.qlist;
+            for (let i = 0; i < qlist.length; i++) {
+                let box = document.createElement("div");
+                box.style.minHeight = "70px";
+                box.style.padding = "10px";
+                box.style.margin = "10px";
+                box.style.boxShadow = "1px 1px 10px coral";
+                box.style.width = "800px";
+                box.innerHTML = "<div style='float:left;'>" + qlist[i].name + "</div>" +
+                    "<div style='float:right'>" +
+                    "<button onclick='playQuiz(" + qlist[i].qid + ")'>ทำแบบทดสอบ</button>" +
+                    "<button onclick='viewQuiz(" + qlist[i].qid + ")'>ดู</button>" +
+                    "<button onclick='deleteQuiz(" + qlist[i].qid + ")'>ลบ</button>" +
+                    "</div>";
+                document.getElementById("div-quiz-list").appendChild(box);
+            }
+        });
+
+        function viewQuiz(qid) {
+            window.location.href = "/create-quiz?qid=" + qid;
+        }
+
+        var Q_ID = "";
+        function playQuiz(qid) {
+            Q_ID = qid;
+            socket.emit('create room', { token: sessionStorage.getItem('token') });
+            console.log('click create room');
+            return false;
+        }
+
+        function deleteQuiz(qid) {
+            var pop = confirm("ยืนยันการลบ!");
+            if (pop == true) {
+                socket.emit('delete-quiz',{token: sessionStorage.getItem('token'), qid:qid});
+            } else {
+            }
+        }
+
+        socket.on('delete-quiz',function(data){
+            if(data.err) return;
+            getMyQuiz();
+        })
+
+        function test1() {
+            socket.emit('test', { id: "1" });
+        }
+    </script>
+</body>
+
+</html>

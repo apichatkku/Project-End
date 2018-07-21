@@ -1,0 +1,138 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+   <div id="div-header"></div>
+   <div class="my-body">
+       <div class="bg-image"></div>
+       <div id="div-header"></div>
+       <div class="my-body">
+           <div class="container">
+               <table class="table table-bordered table-striped">
+               </table>
+           </div>
+
+           <div align="center">
+               <div id="div-history-list" style="width: 90%">
+               </div>
+           </div>
+
+       </div>
+   </div>
+   <div id="div-footer"></div>
+
+   <script>
+       $(document).ready(function () {
+           $("#div-header").load("header", function () {
+               $("#header-history").addClass("active");
+           });
+           $("#div-footer").load("footer");
+       });
+   </script>
+
+   <script>
+       var socket;
+       if (sessionStorage.getItem('token')) {
+           socket = io.connect('', { query: 'token=' + sessionStorage.getItem('token') });
+       } else {
+           socket = io();
+       }
+       window.onload = function () {
+           if (sessionStorage.getItem('token') == null) {
+               window.location.replace("/login");
+               return;
+           }
+           if (sessionStorage.getItem('token') !== null) {
+               console.log(sessionStorage.getItem('token'));
+           }
+           console.log(sessionStorage.getItem('username'), sessionStorage.getItem('firstName'), sessionStorage.getItem('lastName'));
+           getHistoryList();
+       }
+
+       function getHistoryList() {
+           socket.emit('get-history-username', { token: sessionStorage.getItem('token') });
+
+           /*for (var i = 0; i < document.getElementById('quiz').elements.length; i++) {
+                document.getElementById('quiz').elements[i].checked = checked;
+            }*/
+
+          
+       }
+
+       var historyList;
+       socket.on('get-history', function (data) {
+           if (data.err) return;
+           historyList = data.historys;
+           showHistoryList();
+       });
+
+       function showHistoryList() {
+           document.getElementById("div-history-list").innerHTML = "";
+           for (let i = 0; i < historyList.length; i++) {
+               let now = new Date(historyList[i].date);
+               console.log(historyList[i].date);
+               let thday = new Array ("อาทิตย์","จันทร์","อังคาร","พุธ","พฤหัส","ศุกร์","เสาร์"); 
+               let thmonth = new Array ("มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน",
+               "กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม");
+               let thHours = ("0"+now.getHours()).slice(-2);
+               let thMinutes = ("0"+now.getMinutes()).slice(-2);
+               let thSeconds = ("0"+now.getSeconds()).slice(-2);
+               let date = "วัน" + thday[now.getDay()]+ "ที่ "+ now.getDate()+ " " + thmonth[now.getMonth()]+ " " + (now.getFullYear()+543) +
+               " เวลา " + thHours + ":" + thMinutes + ":" + thSeconds;
+               let box = document.createElement("div");
+               box.style.minHeight = "90px";
+               box.style.padding = "10px";
+               box.style.margin = "10px";
+               box.style.boxShadow = "1px 1px 10px coral";
+               box.style.width = "90%";
+               console.log(historyList[i]);
+               box.innerHTML = "<div style='float:left;'><div style='text-align:left;font-size:30px'><u>โจทย์ " + historyList[i].name + "</u></div>" +
+                    "<div style='text-align:left'>" + date +"</div></div>" +
+                   "<div style='float:right'>" +
+                   "<button onclick='viewHistory("+ i +")'>ดู</button>" +
+                   "<button onclick='deleteHistory(" + historyList[i].hid + ")'>ลบ</button>" +
+                   "</div>";
+               document.getElementById("div-history-list").appendChild(box);
+           }
+       }
+       var Q_ID = "";
+
+       //ไว้ทำให้กดดูได้
+       function viewHistory(i) {
+           console.log(historyList[i]);
+           sessionStorage.setItem("history", JSON.stringify(historyList[i]));
+           window.location.href = "/view-history";
+       }
+
+       function deleteHistory(hid) {
+           var pop = confirm("ยืนยันการลบ!");
+           if (pop == true) {
+               socket.emit('delete-history', { token: sessionStorage.getItem('token'), hid: hid });
+           } else {
+           }
+       }
+
+       socket.on('delete-history', function (data) {
+           if (data.err) return;
+           getHistoryList();
+       })
+
+       function test1() {
+           socket.emit('test', { id: "1" });
+       }
+   </script>
+</body>
+
+</html>

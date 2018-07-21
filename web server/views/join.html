@@ -1,0 +1,125 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+    <style>
+        @media (min-width:320px) {
+            div {
+                font-size: 50;
+            }
+
+            .myh1 {
+                font-size: 70;
+                color: white;
+                text-align: center;
+                margin-top: 100;
+            }
+
+            .myh2 {
+                font-size: 40;
+                color: white;
+                text-align: center;
+                margin-top: 30;
+            }
+        }
+
+        @media (min-width:1025px) {
+            div {
+                font-size: 30;
+            }
+            .myh1 {
+                font-size: 40;
+                color: white;
+                text-align: center;
+                margin-top: 10;
+            }
+            .myh2 {
+                font-size: 30;
+                color: white;
+                text-align: center;
+                margin-top: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+    <div class="container-center" align="center">
+        <h1 style="font-size:80; font-weight:bold">ใส่ชื่อและรหัสห้องเพื่อเข้าร่วม</h1>
+        <div id="join-box" align="center">
+            <form id="form-join" action=''>
+                <p>
+                    <input class="input1" type="text" id="name" placeholder="ชื่อ" autocomplete="off">
+                </p>
+                <p>
+                    <input class="input1" type="text" id="roomKey" placeholder="รหัสห้อง" autocomplete="off">
+                </p>
+                <p id="message-wrong-join" style="color:orange"></p>
+                <button class="btn1" style="margin-top:14px;width:auto">เข้าร่วม</button>
+            </form>
+        </div>
+        <div class="myh1">แอปพลิเคชันเพื่อเสริมสร้างทักษะการเขียนโปรแกรม</div>
+        <div class="myh2">ใช้ร่วมในการเรียนการสอนในห้องเรียน
+            <br>เพื่อเสริมสร้างกิจกรรมการเรียนรู้แบบมีส่วนร่วมภายในห้องเรียน
+        </div>
+        <script>
+
+            window.onload = function () {
+                sessionStorage.clear();
+                console.log(sessionStorage.length);
+                if (sessionStorage.getItem('token') !== null) {
+                    console.log(sessionStorage.getItem('token'));
+                }
+            }
+
+            var name = "";
+            var ROOM = "chat123";
+            var socket = io();
+            //send join
+            $('#form-join').submit(function () {
+                try {
+                    let name = $('#name').val();
+                    let roomKey = $('#roomKey').val();
+                    if (name != "" && roomKey != "") {
+                        socket.emit('join room', { name: name, roomKey: roomKey });
+                    }
+                    console.log(name + "," + roomKey);
+                } catch (error) {
+                    console.log(error);
+                }
+                return false; // ทำให้หน้าไม่ refresh
+            });
+
+            //receive
+            //join
+            socket.on('join room', function (data) {
+                console.log(data.adapter);
+                if (data.status == true) { //check status is true
+                    let name = data.study.name;
+                    let token = data.study.token;
+                    let room = data.room;
+                    sessionStorage.setItem('token', token);
+                    sessionStorage.setItem('name', name);
+                    sessionStorage.setItem('room', room);
+                    window.location.replace("/room-student");
+                } else {
+                    if (data.status == "name") {
+                        $('#message-wrong-join').html("ชื่อซ้ำ");
+                    } else if (data.status == "roomKey") {
+                        $('#message-wrong-join').html("ไม่พบรหัสห้องนี้");
+                    }
+                }
+            });
+        </script>
+</body>
+
+</html>

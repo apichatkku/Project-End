@@ -1,0 +1,75 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+</head>
+<style>
+    .myh1 {
+        font-size: 50px;
+        color: white;
+        text-align: center;
+        margin-top: 100px;
+    }
+
+    .myh2 {
+        font-size: 30px;
+        color: white;
+        text-align: center;
+        margin-top: 30px;
+    }
+</style>
+
+<body>
+        <div style="width:600px; margin:300px auto;">
+    <div class="bg1"></div>
+    <div>
+        <div id="confirm-box" align="center">
+            
+            <form id="form-register" action=''>
+                <p>
+                    <h1 style="font-weight: bold">สมัครสมาชิกเสร็จสิน</h1>
+                </p>
+                
+                <p id="message-wrong-register" style="color:rgb(112, 0, 0)"></p>
+                <input type="button" class="btn1" value="ตกลง" onclick="window.location='/login'">
+                
+            </form>
+        </div>
+        
+        <script>
+
+            window.onload = function () {
+                sessionStorage.clear();
+                console.log(sessionStorage.length);
+                if (sessionStorage.getItem('token') !== null) {
+                    console.log(sessionStorage.getItem('token'));
+                }
+            }
+
+            var socket = io();
+            
+
+            //receive
+            //register
+            socket.on('confirm', function (data) {
+                if (data.msgerror == "") { //check status is true
+
+                } else {
+                    //alert("Username is already !\n Please enter password of this username or enter new username.");
+                    //window.location.replace("https://www.google.co.th");
+
+                    $('#message-wrong-register').html(data.msgerror);
+                }
+
+            });
+        </script>
+        </div>
+</body>
+
+</html>

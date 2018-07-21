@@ -1,0 +1,123 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+    <style>
+        table {
+            background-color: #fff;
+            font-size: 26px;
+        }
+
+        table#tbscore {
+            width: 90%;
+            border-collapse: collapse;
+        }
+
+        table#tbscore,
+        td.tbscore,
+        th.tbscore {
+            padding: 0px 0px;
+            text-align: center;
+            border: 1px solid black;
+        }
+
+        td {
+            padding: 10px 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+    <div id="div-header"></div>
+    <div class="my-body">
+        <div style="text-align: center">
+            <div id="quiz-name" style="font-size: 40"></div>
+            <input type="image" id="btnDownloadExcel" src="images/system/excel_icon.png" align="right" style="margin-right:50px;display:none;"
+                width="48" height="48" onClick="fnExcelReport();" value="download" />
+            <a href="#" id="testAnchor"></a>
+            <script src="/js/client/create_excel_report.js"></script>
+            <div id="student-list-box" align="center">
+            </div>
+        </div>
+    </div>
+    <div id="div-footer"></div>
+    <script>
+        $(document).ready(function () {
+            $("#div-header").load("header", function () {
+                $("#header-history").addClass("active");
+            });
+            $("#div-footer").load("footer");
+        });
+    </script>
+    <script>
+        var socket;
+        var HISTORY;
+        if (sessionStorage.getItem('token')) {
+            socket = io.connect('', { query: 'token=' + sessionStorage.getItem('token') });
+        } else {
+            socket = io();
+        }
+        window.onload = function () {
+            if (sessionStorage.getItem('token') == null) {
+                window.location.replace("/login");
+                return;
+            }
+            if (sessionStorage.getItem('token') !== null) {
+                console.log(sessionStorage.getItem('token'));
+            }
+            console.log(sessionStorage.getItem('username'), sessionStorage.getItem('firstName'), sessionStorage.getItem('lastName'));
+            HISTORY = sessionStorage.getItem("history");
+            if (typeof HISTORY !== "undefined") {
+                HISTORY = JSON.parse(HISTORY);
+                showHistory();
+            }
+        }
+
+        function showHistory() {
+            let students = JSON.parse(HISTORY.students);
+            console.log(HISTORY);
+            $('#quiz-name').text(HISTORY.name);
+            //แสดงปุ่มโหลดไฟล์ excel
+            $("#btnDownloadExcel").appendTo("#student-list-box");
+            $("#btnDownloadExcel").show();
+            $('#student-list-box').append($('<p>').text(''));
+            //หัวข้อตาราง
+            $('#student-list-box').append($('<u style="font-size:32px;">').text('ตารางคะแนน'));
+            //สร้างตาราง html
+            var tb = document.createElement("TABLE");
+            tb.setAttribute("id", "tbscore");
+            document.getElementById("student-list-box").appendChild(tb);
+            //สร้างหัวตาราง html
+            var tr = document.createElement("TR");
+            tb.appendChild(tr);
+            var row = '';
+            row += '<th class="tbscore" width="20%">อันดับ</th>';
+            row += '<th class="tbscore" width="40%">ชื่อ</th>';
+            row += '<th class="tbscore" width="20%">คะแนน</th>';
+            row += '<th class="tbscore" width="20%">ทำได้/ข้อ</th>';
+            tr.innerHTML = row;
+            //ใส่ข้อมูลลงตาราง html
+            for (let i in students) {
+                var tr = document.createElement("TR");
+                document.getElementById("tbscore").appendChild(tr);
+                var row = '';
+                row += '<td class="tbscore">' + (Number(i) + 1) + '</td>';
+                row += '<td class="tbscore">' + students[i].name + '</td>';
+                row += '<td class="tbscore">' + students[i].score + '</td>';
+                row += '<td class="tbscore">' + students[i].correct + '</td>';
+                tr.innerHTML = row;
+            }
+        }
+    </script>
+</body>
+
+</html>

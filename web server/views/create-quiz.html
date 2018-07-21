@@ -1,0 +1,417 @@
+<html>
+
+<head>
+    <title>แอปพลิเคชันเพื่อการเรียนรู้การเขียนโปรแกรม</title>
+    <link rel="icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery/1.11.2/jquery.min.js"></script>
+    <script src="/js/client/sha1.js"></script>
+
+    <script src="/blockly/custom/acorn_interpreter.js"></script>
+    <script src="/blockly/blockly_compressed.js"></script>
+    <script src="/blockly/blocks_compressed.js"></script>
+    <script src="/blockly/javascript_compressed.js"></script>
+    <script src="/blockly/msg/js/en.js"></script>
+    <script src="/blockly/custom/customblocks.js"></script>
+    <style>
+        label {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .input {
+            font-size: 26px;
+        }
+
+        .btnSelected {
+            background: coral;
+            color: white;
+        }
+
+        .btnsmall {
+            padding: 0 0;
+            height: 40px;
+        }
+
+        .div-code {
+            border: 1px solid lightgrey;
+            padding-top: 10px;
+            padding-left: 30px;
+            font-family: Arial;
+            font-size: 18px;
+            font-weight: normal;
+            text-align: left;
+            overflow: scroll;
+        }
+
+        .div-code .stage {
+            margin-left: 40px;
+        }
+
+        .div-code div {
+            background: white;
+        }
+
+        .div-code .hl {
+            background: yellow;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-image"></div>
+    <div id="div-header"></div>
+    <div id="div-body" class="my-body">
+        <div align="center">
+            <div class="my-header" style="width: 90%; margin-bottom: 20px;margin-top: 20px;">
+                <input id="btn-form" type="button" class="btn1 btnSelected btnsmall" value="รายละเอียด" onclick="$('#box-form').show();$('#box-code').hide();toggleBtn();">
+                <input id="btn-code" type="button" class="btn1 btnsmall" value="โค้ด" onclick="$('#box-form').hide();$('#box-code').show();toggleBtn();">
+                <input type="button" class="btn1 btnsmall" id="btn-save" value="เสร็จสิ้น" onclick="saveQuiz()">
+                <p id="message-wrong-save-quiz" style="color:rgb(112, 0, 0)"></p>
+            </div>
+            <script>
+                function toggleBtn() {
+                    if ($('#box-form').css('display') == 'none') {
+                        $('#btn-form').removeClass('btnSelected');
+                        $('#btn-code').addClass('btnSelected');
+                    } else {
+                        $('#btn-code').removeClass('btnSelected');
+                        $('#btn-form').addClass('btnSelected');
+                    }
+                }
+            </script>
+        </div>
+        <form id="box-form" action="" style="text-align: left">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <div class="col-sm-0.5">
+                                <label for="input" class="control-label">ชื่อโจทย์</label>
+                            </div>
+                            <div class="col-sm-11.5">
+                                <input type="text" class="form-control input" id="name-quiz" placeholder="ชื่อโจทย์" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-0.5">
+                                <label for="input" class="control-label">คำอธิบาย</label>
+                            </div>
+                            <div class="col-sm-11.5">
+                                <textarea class="form-control input" rows="4" id="desc-quiz" placeholder="คำอธิบาย" autocomplete="off"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div style="text-align: center;" id="box-code">
+            <div style="display:inline-block;text-align: center;width: 90%;">
+                <p style="text-align:left;">
+                    <span style="float:left;background: rgb(253, 148, 179);padding: 5px 50px;border: 2px solid black;">Blockly</span>
+                    <span style="float:right;background: rgb(228, 183, 59);padding: 5px 50px;border: 2px solid black;">Code</span>
+                    <button style="font-size: 20px;padding: 2px 10px;color:white;background:rgb(158, 158, 158);" onclick="bigBox()">ขยาย</button>
+                    <button id="btn-run-code" style="font-size: 20px;padding: 2px 20px;color:white;background:rgb(87, 211, 76);margin-left: 10px"
+                        onclick="stepCode();runCodeAll();">RUN</button>
+                    <button id="btn-run-code" style="font-size: 20px;padding: 2px 20px;color:white;background:rgb(241, 58, 58);" onclick="resetCode();">STOP</button>
+
+                    <button id="btn-show-code-input" style="font-size: 20px;float:right;background: rgb(250, 170, 50);padding: 2px 10px;margin-right: 10px"
+                        onclick="toggleCode()">
+                        สร้าง Blockly ด้วยโค้ด C++
+                    </button>
+                    <button id="btn-translate" style="font-size: 20px;display:none;float:right;background: rgb(105, 189, 26);padding: 2px 10px;margin-right: 10px;color:white;"
+                        onclick="tanslateCode($('#code-area').val())">
+                        ตกลง
+                    </button>
+                </p>
+                <div id="blocklyDiv" style="display:block; height: 300px;width:49%;border:1px solid black;float: left;"></div>
+                <div class="div-code" id="div-code" style="display: block; height: 300px; width: 49%;border:1px solid black;float: right;">code</div>
+                <textarea id="code-area" style="display: none; height: 300px; width: 49%;border:1px solid black;float: right;" spellcheck="false"></textarea>
+                <textarea id="output" disabled="disabled" style="font-size: 22px;display: inline-block; height: 200px; width: 100%;margin-top: 20px"></textarea>
+            </div>
+        </div>
+        <script>
+            function bigBox() {
+                let div = document.getElementById("blocklyDiv");
+                div.style.position = "absolute";
+                div.style.zIndex = 2;
+                div.style.left = "50%"
+                div.style.top = "50%";
+                div.style.textAlign = "center";
+                div.style.width = "90%";
+                div.style.height = "90%";
+                div.style.marginLeft = -div.clientWidth / 2 + "px";
+                div.style.marginTop = -div.clientHeight / 2 + "px";
+
+                div.style.boxShadow = "0px 0px 1000px 100px black";
+
+                div.innerHTML = "";
+                let xmltxt = blocklySave();
+                theWorkspace = Blockly.inject('blocklyDiv',
+                    {
+                        media: '/blockly/media/',
+                        toolbox: document.getElementById('toolbox')
+                    }
+                );
+                blocklyOpen(xmltxt);
+
+                let btn = document.createElement("button");
+                btn.innerHTML = "X";
+                div.appendChild(btn);
+                btn.style.color = "white";
+                btn.style.background = "Red";
+                btn.style.fontWeight = "bold";
+                btn.style.position = "absolute";
+                btn.style.right = 0;
+                btn.style.top = 0;
+                btn.style.width = "50px";
+                btn.style.height = "50px";
+                btn.style.border = "1px solid white";
+                btn.style.boxShadow = "0px 0px 0px 5px red";
+                btn.onclick = smallBox;
+
+            }
+
+            function smallBox() {
+                let div = document.getElementById("blocklyDiv");
+                div.innerHTML = "";
+                div.style = "display:block; height: 300px;width:49%;border:1px solid black;float: left";
+                let xmltxt = blocklySave();
+                theWorkspace = Blockly.inject('blocklyDiv',
+                    {
+                        media: '/blockly/media/',
+                        toolbox: document.getElementById('toolbox')
+                    }
+                );
+                blocklyOpen(xmltxt);
+                console.log(div.style);
+            }
+        </script>
+    </div>
+    <script>
+        function toggleCode() {
+            console.log(5555);
+            $('#div-code').toggle();
+            $('#code-area').toggle();
+            if ($('#code-area').css('display') != 'none') {
+                $('#btn-translate').show();
+                $('#btn-show-code-input').text("ยกเลิก");
+            } else {
+                $('#btn-translate').hide();
+                $('#btn-show-code-input').text("สร้าง Blockly ด้วยโค้ด C++");
+            }
+        }
+        function runCodeAll() {
+            if (myInterpreter === null) {
+                return;
+            } else {
+                try {
+                    stepCode();
+                } catch (e) {
+                    console.log(e);
+                }
+                window.setTimeout(runCodeAll, 100);
+            }
+            /*$('#btn-run-code').addClass();
+            $('#code-area').toggle();
+            if ($('#code-area').css('display') != 'none') {
+                $('#btn-translate').show();
+                $('#btn-show-code-input').text("ยกเลิก");
+            } else {
+                $('#btn-translate').hide();
+                $('#btn-show-code-input').text("สร้าง Blockly ด้วยโค้ด C++");
+            }*/
+        }
+    </script>
+
+    <div id="div-footer"></div>
+
+    <xml id="toolbox" style="display: none">
+        <category name="ตัวแปร">
+            <block type="my_declare_variable"></block>
+            <block type="my_setvariable"></block>
+            <block type="my_variable"></block>
+            <button text="สร้างตัวแปรใหม่" callbackKey="btnCreateVariable"></button>
+        </category>
+        <category name="กำหนดค่า">
+            <block type="my_number"></block>
+            <block type="my_string"></block>
+            <block type="my_scanf"></block>
+            <block type="my_setvariable"></block>
+            <block type="my_math"></block>
+        </category>
+        <category name="แสดงผล">
+            <block type="my_string"></block>
+            <block type="my_printf"></block>
+        </category>
+        <category name="เงื่อนไข">
+            <block type="my_condition"></block>
+            <block type="my_compare"></block>
+            <block type="my_if"></block>
+            <block type="my_ifelse"></block>
+        </category>
+        <category name="ทำซ้ำ">
+            <block type="my_while"></block>
+            <block type="my_dowhile"></block>
+            <block type="my_for">
+                <value name="varCount">
+                    <block type="my_variable">
+                        <field name="setcount_set">i</field>
+                    </block>
+                </value>
+                <value name="numCount">
+                    <block type="my_number">
+                        <field name="number">0</field>
+                    </block>
+                </value>
+                <value name="condition">
+                    <block type="my_condition">
+                        <value name="var1">
+                            <block type="my_variable">
+                                <field name="setcount_set">i</field>
+                            </block>
+                        </value>
+                        <value name="var2">
+                            <block type="my_number">
+                                <field name="number">5</field>
+                            </block>
+                        </value>
+                        <field name="symbol">&lt;</field>
+                    </block>
+                </value>
+                <value name="varStep">
+                    <block type="my_variable">
+                        <field name="setcount_set">i</field>
+                    </block>
+                </value>
+            </block>
+        </category>
+        <category name="ฟังก์ชัน">
+            <block type="my_callfunc"></block>
+            <block type="my_callfunc_re"></block>
+            <block type="my_boxfunc"></block>
+        </category>
+        <category name="คำถาม">
+            <block type="ask_setvariable"></block>
+            <block type="ask_if"></block>
+            <block type="ask_ifelse"></block>
+            <block type="ask_while"></block>
+            <block type="ask_dowhile"></block>
+        </category>
+    </xml>
+
+    <script>
+        $(document).ready(function () {
+            $("#div-header").load("header", function () {
+                $("#header-createProposition").addClass("active");
+            });
+            $("#div-footer").load("footer");
+        });
+    </script>
+
+    <script>
+        var socket;
+        if (sessionStorage.getItem('token')) {
+            socket = io.connect('', { query: 'token=' + sessionStorage.getItem('token') });
+        } else {
+            socket = io();
+        }
+        window.onload = function () {
+            if (sessionStorage.getItem('token') == null) {
+                window.location.replace("/login");
+                return;
+            }
+            if (sessionStorage.getItem('token') !== null) {
+                console.log(sessionStorage.getItem('token'));
+            }
+            console.log(sessionStorage.getItem('username'), sessionStorage.getItem('firstName'), sessionStorage.getItem('lastName'));
+
+            //set up
+            $('#box-code').hide();
+            let url = new URL(window.location.href);
+            let qid = url.searchParams.get("qid");
+            if (qid !== null) {
+                Q_ID = qid;
+                document.getElementById("btn-save").value = "บันทึกการแก้ไข";
+                getQuiz();
+            }
+        }
+    </script>
+
+    <script>
+        var Q_ID = "";
+        function saveQuiz() {
+            let wrongMsg = "";
+            let xmlcode;
+            let qname = $('#name-quiz').val();
+            let qdesc = $('#desc-quiz').val();
+            try {
+                if (qname == "") {
+                    wrongMsg += "<p>-กรุณาใส่ชื่อโจทย์</p>";
+                } else {
+                    xmlcode = blocklySave();
+                    let token = sessionStorage.getItem('token');
+                    if (Q_ID == "") {
+                        socket.emit('save-quiz', { token: token, qname: qname, qdesc: qdesc, xmlcode: xmlcode });
+                    } else {
+                        socket.emit('update-quiz', { token: token, qid: Q_ID, qname: qname, qdesc: qdesc, xmlcode: xmlcode });
+                    }
+                }
+            } catch (e) {
+                console.log(e);
+                wrongMsg = "<p>เกิดข้อผิดพลาด</p>"
+            }
+            console.log(qname, "\n", xmlcode);
+            $('#message-wrong-save-quiz').html(wrongMsg);
+            window.setTimeout(function () { $('#message-wrong-save-quiz').text(""); }, 4000);
+        }
+
+        socket.on('save-quiz', function (data) {
+            if (data.err) {
+                $('#message-wrong-save-quiz').html(data.msg);
+            } else {
+                alert('บันทึกเรียบร้อย\nid:' + data.qid);
+            }
+        });
+
+        function getQuiz() {
+            socket.emit('get-quiz-id', { token: sessionStorage.getItem('token'), qid: Q_ID });
+        }
+
+        socket.on('get-quiz', function (data) {
+            if (data.err) {
+                $('#message-wrong-save-quiz').html(data.msg);
+            } else {
+                console.log();
+                let quiz = data.qlist[0];
+                console.log(data.qlist);
+                if (quiz.username != sessionStorage.getItem("username")) {
+                    document.getElementById("btn-save").value = "ทำแบบทดสอบ";
+                    document.getElementById("btn-save").onclick = playQuiz;
+                }
+                $('#name-quiz').val(quiz.name);
+                $('#desc-quiz').val(quiz.description);
+                $('#box-code').show();
+                blocklyOpen(quiz.xmlcode);
+                $('#box-code').hide();
+            }
+        });
+
+        function playQuiz() {
+            socket.emit('create room', { token: sessionStorage.getItem('token') });
+            console.log('click create room');
+            return false;
+        }
+    </script>
+    <script src="/js/client/blocklyController.js"></script>
+    <script src="/js/client/codeToBox.js"></script>
+    <script>
+        theWorkspace.registerButtonCallback("btnCreateVariable", function () { Blockly.Variables.createVariable(theWorkspace) });
+    </script>
+</body>
+
+</html>
